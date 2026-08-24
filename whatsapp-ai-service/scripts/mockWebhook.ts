@@ -6,6 +6,7 @@
  *
  * Set BASE_URL to target a different host (default http://localhost:3000).
  */
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
@@ -32,8 +33,19 @@ async function verifyEndpoint(): Promise<void> {
 }
 
 async function sendPayload(file: string): Promise<void> {
-  const body = JSON.parse(fs.readFileSync(path.join(PAYLOAD_DIR, file), 'utf8'));
-  const response = await axios.post(`${BASE_URL}/webhook`, body, { validateStatus: () => true });
+  const raw = fs.readFileSync(path.join(PAYLOAD_DIR, file), 'utf8');
+  const body = JSON.stringify(JSON.parse(raw));
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (config.metaAppSecret !== '') {
+    headers['X-Hub-Signature-256'] = `sha256=${crypto
+      .createHmac('sha256', config.metaAppSecret)
+      .update(body)
+      .digest('hex')}`;
+  }
+  const response = await axios.post(`${BASE_URL}/webhook`, body, {
+    headers,
+    validateStatus: () => true,
+  });
   const ok = response.status === 200;
   console.log(`POST /webhook  -> ${response.status} ${ok ? 'OK' : 'FAILED'}  (${file})`);
   if (!ok) {

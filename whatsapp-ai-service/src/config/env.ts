@@ -12,6 +12,7 @@ export interface AppConfig {
   databaseUrl: string;
   metaAccessToken: string;
   metaPhoneNumberId: string;
+  metaAppSecret: string;
   webhookVerifyToken: string;
   openaiApiKey: string;
   openaiModel: string;
@@ -25,6 +26,7 @@ export const config: AppConfig = {
   databaseUrl: optional('DATABASE_URL', 'postgres://whatsapp:whatsapp@localhost:5432/whatsapp_ai'),
   metaAccessToken: optional('META_ACCESS_TOKEN', ''),
   metaPhoneNumberId: optional('META_PHONE_NUMBER_ID', ''),
+  metaAppSecret: optional('META_APP_SECRET', ''),
   webhookVerifyToken: optional('WEBHOOK_VERIFY_TOKEN', 'my-verify-token'),
   openaiApiKey: optional('OPENAI_API_KEY', ''),
   openaiModel: optional('OPENAI_MODEL', 'gpt-4o-mini'),

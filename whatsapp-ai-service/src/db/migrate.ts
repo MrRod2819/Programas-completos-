@@ -3,7 +3,13 @@ import path from 'path';
 import { pool, closePool } from './pool';
 import { logger } from '../utils/logger';
 
-const MIGRATIONS_DIR = path.resolve(__dirname, '../../db/migrations');
+// Resolved from the compiled tree (dist/src/db) and from the sources (src/db),
+// so the same code works under tsx and inside the Docker image.
+const MIGRATIONS_DIR = [
+  path.resolve(__dirname, '../../db/migrations'),
+  path.resolve(__dirname, '../../../db/migrations'),
+  path.resolve(process.cwd(), 'db/migrations'),
+].find((candidate) => fs.existsSync(candidate));
 
 export async function runMigrations(): Promise<void> {
   await pool.query(
@@ -12,6 +18,10 @@ export async function runMigrations(): Promise<void> {
        applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
      )`
   );
+
+  if (!MIGRATIONS_DIR) {
+    throw new Error('migrations directory not found');
+  }
 
   const files = fs
     .readdirSync(MIGRATIONS_DIR)

@@ -44,6 +44,9 @@ tests/                      unit tests (vitest)
 | `POST` | `/webhook` | Answers `200 OK` immediately, then processes the message asynchronously. Status updates (delivered/read) and non-text messages are ignored. |
 | `GET`  | `/health`  | Liveness + database check. |
 
+When `META_APP_SECRET` is set, every `POST /webhook` body is authenticated with an HMAC-SHA256
+`X-Hub-Signature-256` check before it is processed; unsigned or tampered payloads get a 401.
+
 ## Message flow
 
 1. Parse `entry[0].changes[0].value.messages[0]`, extract `from` and `text.body`.
@@ -86,6 +89,7 @@ npm run dev
 | `DATABASE_URL` | PostgreSQL connection string |
 | `META_ACCESS_TOKEN` | Meta permanent access token |
 | `META_PHONE_NUMBER_ID` | WhatsApp Cloud API phone number id |
+| `META_APP_SECRET` | Meta app secret; when set, `POST /webhook` requires a valid `X-Hub-Signature-256` (401 otherwise). Leave empty to disable the check. |
 | `WEBHOOK_VERIFY_TOKEN` | Token configured in the Meta webhook setup |
 | `OPENAI_API_KEY` | OpenAI API key |
 | `OPENAI_MODEL` | Defaults to `gpt-4o-mini` |
@@ -109,7 +113,7 @@ MOCK_MODE=true npm run dev            # in one terminal
 MOCK_MODE=true npm run mock:webhook   # in another terminal
 ```
 
-The runner verifies `GET /webhook` (challenge echo) and posts every payload in `scripts/payloads/`:
+The runner signs each request with `META_APP_SECRET` when it is set, verifies `GET /webhook` (challenge echo) and posts every payload in `scripts/payloads/`:
 a text question, an appointment confirmation (triggers a lead), a delivery status update and an
 image message (both must be ignored). Send a single payload with
 `npm run mock:webhook -- appointmentMessage`.
